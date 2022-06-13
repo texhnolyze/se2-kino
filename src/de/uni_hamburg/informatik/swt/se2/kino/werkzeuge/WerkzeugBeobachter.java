@@ -5,7 +5,7 @@ package de.uni_hamburg.informatik.swt.se2.kino.werkzeuge;
  * @author philipp
  *
  */
-public interface WerkzeugBeobachter 
+public interface WerkzeugBeobachter<T extends BeobachtbaresWerkzeug>
 {
     /**
      * Reagiert auf Veränderungen in den beobachtbaren Werkzeugen
@@ -14,5 +14,5 @@ public interface WerkzeugBeobachter
      * 
      * @require werkzeug != null
      */
-	void reagiereAufAenderung(BeobachtbaresWerkzeug werkzeug);
+	void reagiereAufAenderung(T werkzeug);
 }

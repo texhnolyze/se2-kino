@@ -2,6 +2,9 @@ package de.uni_hamburg.informatik.swt.se2.kino.werkzeuge.kasse;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 import de.uni_hamburg.informatik.swt.se2.kino.fachwerte.Datum;
 import de.uni_hamburg.informatik.swt.se2.kino.materialien.Kino;
@@ -21,7 +24,7 @@ import de.uni_hamburg.informatik.swt.se2.kino.werkzeuge.vorstellungsauswaehler.V
  * @author SE2-Team
  * @version SoSe 2021
  */
-public class KassenWerkzeug implements WerkzeugBeobachter
+public class KassenWerkzeug
 {
     // Das Material dieses Werkzeugs
     private Kino _kino;
@@ -33,6 +36,7 @@ public class KassenWerkzeug implements WerkzeugBeobachter
     private PlatzVerkaufsWerkzeug _platzVerkaufsWerkzeug;
     private DatumAuswaehlWerkzeug _datumAuswaehlWerkzeug;
     private VorstellungsAuswaehlWerkzeug _vorstellungAuswaehlWerkzeug;
+    private Collection<? extends WerkzeugBeobachter<? extends BeobachtbaresWerkzeug>> _beobachter;
 
     /**
      * Initialisiert das Kassenwerkzeug.
@@ -51,8 +55,8 @@ public class KassenWerkzeug implements WerkzeugBeobachter
         _platzVerkaufsWerkzeug = new PlatzVerkaufsWerkzeug();
         _datumAuswaehlWerkzeug = new DatumAuswaehlWerkzeug();
         _vorstellungAuswaehlWerkzeug = new VorstellungsAuswaehlWerkzeug();
-        
-        registriereBeobachter();
+
+        _beobachter = registriereBeobachter();
 
         // UI erstellen (mit eingebetteten UIs der direkten Subwerkzeuge)
         _ui = new KassenWerkzeugUI(_platzVerkaufsWerkzeug.getUIPanel(),
@@ -69,33 +73,32 @@ public class KassenWerkzeug implements WerkzeugBeobachter
     /**
      * Registriere Kassenwerkzeug bei seinen Subwerkzeugen als Beobachter
      */
-    private void registriereBeobachter() {
-		_datumAuswaehlWerkzeug.registriereBeobachter(this);
-		_vorstellungAuswaehlWerkzeug.registriereBeobachter(this);
+    private Collection<? extends WerkzeugBeobachter<? extends BeobachtbaresWerkzeug>> registriereBeobachter()
+    {
+        class DatumAuswahlBeobachter implements WerkzeugBeobachter<DatumAuswaehlWerkzeug>
+        {
+            @Override
+            public void reagiereAufAenderung(DatumAuswaehlWerkzeug werkzeug)
+            {
+                setzeTagesplanFuerAusgewaehltesDatum();
+            }
+        }
+
+        class VorstellungsAuswahlBeobachter implements WerkzeugBeobachter<VorstellungsAuswaehlWerkzeug>
+        {
+            @Override
+            public void reagiereAufAenderung(VorstellungsAuswaehlWerkzeug werkzeug)
+            {
+                setzeAusgewaehlteVorstellung();
+            }
+        }
+
+        return new HashSet<>(){{
+            add(new DatumAuswahlBeobachter());
+            add(new VorstellungsAuswahlBeobachter());
+        }};
 	}
     
-    /**
-     * Reagiert auf Veränderungen in den beobachtbaren Werkzeugen
-     * 
-     * @param werkzeug	das Werkzeug, in welchem die Veränderung aufgetreten ist
-     * 
-     * @require werkzeug != null
-     */
-    @Override
-    public void reagiereAufAenderung(BeobachtbaresWerkzeug werkzeug)
-    {
-    	assert werkzeug != null: "Vorbedingung verletzt: werkzeug != null";
-    	
-    	if (werkzeug instanceof VorstellungsAuswaehlWerkzeug)
-    	{
-    		setzeAusgewaehlteVorstellung();
-    	}
-    	else if (werkzeug instanceof DatumAuswaehlWerkzeug)
-    	{
-    		setzeTagesplanFuerAusgewaehltesDatum();
-    	}    	
-    }
-
 	/**
      * Fügt die Funktionalitat zum Beenden-Button hinzu.
      */
